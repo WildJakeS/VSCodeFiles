@@ -1,0 +1,131 @@
+from random import randint
+
+enemyKills = 0
+
+rooms = {
+  'Forest': {
+    'north': 'Cave',
+    'east': 'River',
+    'south': 'Village',
+    'west': 'Ruins',
+    'description': "You are standing in a vibrant forest. Sunlight filters through the leaves. The air is thick with the scent of decay.",
+  },
+  'Cave': {
+    'south': 'Forest',
+    'description': "You are in a damp, dark cave. A faint smell of bat dung fills the air.",
+    'enemy': 'Radrooster Swarm'
+  },
+  'River': {
+    'west': 'Forest',
+    'description': "You stand at the bank of a river. The current seems strong.",
+    'enemy': 'Toxic Ghoul'
+  },
+  'Village': {
+    'north': 'Forest',
+    'east': 'Exit',
+    'description': "A small, abandoned run-down village. Empty husks of buildings stand as silent reminders of the past.",
+    'enemy': 'Rat-worm'
+  },
+  'Ruins': {
+    'east': 'Forest',
+    'description': "Before you lays crumbling ruins of an ancient structure. A faint glow emanates from within, you sense you should stay away.",
+  },
+  'Exit': { 
+    'description': "You reach the edge of this wasteland. The air feels cleaner, and a glimmer of hope flickers in your heart. You must defeat 3 enemies to exit.",
+    'west': 'Village' if enemyKills < 3 else 'Village'
+  },
+}
+
+currentRoom = 'Forest'
+enemyKills = 0
+
+def fight(enemy):
+  enemyHealth = 10
+  playerHealth = 15
+
+  while True:
+    print(f"\nYou encounter a {enemy}! Health: {enemyHealth}")
+    print(f"Your health: {playerHealth}")
+
+    #player's turn
+    action = input("Attack(a) or Run(r): ").lower()
+
+    if action == 'a':
+      damage = randint(1, 6)  #1-6 dice roll for damage
+      enemyHealth -= damage
+      print(f"You attack and deal {damage} damage!")
+    elif action == 'r':
+      print("You attempt to escape!")
+      escapeChance = randint(1, 4)
+
+      if escapeChance > 2:  #50% chance to escape
+        print("You manage to escape the fight!")
+        return None  #player escapes
+      else:
+        print("You couldn't get away!")
+    else:
+      print("Invalid action!")
+
+    #check for win/loss
+    if enemyKills >= 3 and currentRoom == 'Exit':
+      gameOver = True
+      return None
+    elif enemyHealth <= 0:
+      return enemyKills + 1 
+    elif playerHealth <= 0:
+      gameOver = True
+      return False
+
+    # Enemy turn (simple attack)
+    damageDealt = randint(1, 6)
+    playerHealth -= damageDealt
+
+    print("\n")
+    print(f"The {enemy} attacks and deals {damageDealt} damage!")
+    print(f"Your health: {playerHealth}")
+
+    #check if player lost
+    if playerHealth <= 0:
+      print(f"You were defeated by the {enemy}!")
+      return False
+
+gameOver = False
+
+print(f"\nWelcome to Escape from the Wasteland!")
+
+while not gameOver:
+  print("\n" + rooms[currentRoom]['description'])
+
+  #show available exits/ways to go
+  exits = [direction for direction in rooms[currentRoom] if direction != 'description' and direction != 'enemy']
+  
+  if exits:
+    print("Exits:", ", ".join(exits))
+  else:
+    print("You seem to have reached a dead end.")
+
+  direction = input("Which direction do you want to go? ").lower()
+
+  #check for valid exit or fight
+  if direction in rooms[currentRoom] and rooms[currentRoom][direction] is not None:
+    
+    currentRoom = rooms[currentRoom][direction]
+    
+    if 'enemy' in rooms[currentRoom]:  #check if the room has a enemy
+        fightResults = fight(rooms[currentRoom]['enemy'])
+    
+    if fightResults is None:  #escape from fight
+      continue
+    elif not fightResults:  #player loses the fight
+      break
+    else:  #player wins the fight
+      enemyKills = fightResults  #update enemyKills after each fight
+
+#check win condition after each fight
+  if enemyKills >= 3 and currentRoom == 'Exit':
+    gameOver = True
+  if gameOver:
+    if enemyKills >= 3:
+        print(f"\nCongratulations! You escaped the wasteland after defeating {enemyKills} enemies!")
+    else:
+        print(f"\nYou were defeated. Better luck next time!")
